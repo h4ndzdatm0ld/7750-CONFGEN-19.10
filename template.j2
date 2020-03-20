@@ -1,8 +1,14 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo SYSTEM CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 system name {{host}}
 /configure sfm 1 sfm-type {{sfm_type}}
 /configure card 1 card-type "iom3-xp-b"
 /configure card 1  mda 1  mda-type "{{mda_type}}"
 /configure card 1  mda 2  mda-type "{{mda_type}}"
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo PORT CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /configure port 1/1/1
 no shut
 ethernet mtu 9212
@@ -35,9 +41,9 @@ exit all
 no shut
 ethernet mtu 9212
 exit all
-
-
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER PREFIX LIST CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 configure router interface system address {{SystemIP}}/32
 {%- for ip in prefix %}
 configure router policy-options
@@ -48,11 +54,9 @@ exit
 commit
 exit all
 {%- endfor %}
-
-
-
-
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER POLICY CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- if policy %}
 /configure router policy-options
 begin
@@ -63,14 +67,17 @@ action accept
 /configure router policy-options commit
 exit all
 {%- endif %}
-
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER INTERFACE CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- for iface in interfaces %}
 /configure router interface {{ iface[0] }}
 address {{ iface[1] }}
 port {{ iface[2] }}
 {%- endfor %}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER MPLS CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- if mpls %}
 /configure router ldp
 targeted-session
@@ -97,14 +104,20 @@ exit
 auto-lsp lsp-template "Full-Mesh" policy "Remote-PEz"
 exit all
 {%- endif %}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo MPLS INTERFACE CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- for iface in mplsInterfaces %}
 /configure router mpls interface {{ iface[0] }}
 no shut
 {%- endfor %}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER BGP AS CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /configure router autonomous-system {{bgp_AS}}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ROUTER BGP GROUP CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /configure router bgp group mp-BGP
 family vpn-ipv4 l2-vpn
 peer-as {{bgp_AS}}
@@ -121,7 +134,9 @@ exit
 neighbor {{ peer[4] }}
 exit all
 {%- endfor %}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo MPLS SHORTCUTS CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- if mpls_shortcuts %}
 /configure router bgp
 next-hop-resolution
@@ -133,17 +148,6 @@ exit
 resolution filter
 {%- endif %}
 
-{%- if mpls_shortcuts %}
-/configure router bgp
-next-hop-resolution
-shortcut-tunnel
-family ipv4
-resolution-filter
-rsvp
-exit
-resolution filter
-exit all
-{%- endif %}
 
 {% if bgp_rapidUpdate %}
 /configure router bgp rapid-update l2-vpn
