@@ -14,3 +14,9 @@ Things to note regarding the configuration:
     The MPLS-LSPs are limited to Facility Fast Re-Route due to auto-lsp.
     The template includes a pw-template and leverages BGP-AD (Auto-Discovery) to auto-create MESH-SDPs across a VPLS.
     The template includes an LDP template to establish Targeted-LDP sessions.
+
+
+# Future Additions
+- Configuration backups
+- Logging
+- Error Checking
