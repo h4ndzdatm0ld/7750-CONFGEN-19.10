@@ -1,42 +1,77 @@
 ---
 
-# The Jinja template has a lot more configuration than what's specified here. Review the entire template to make sure it's what you want.
-# There are several unseen commands that run in the background, such as chassis mode, PW-Templates, etc.
+# The Jinja template has a lot more configuration than what's specified here.
+# Review the entire template to make sure it's what you want.
+# There are several unseen commands that run in the background, 
+# PW-Templates, etc.
 
 R1-SANDBOX: #Host / Hostname
   hostip: 10.0.0.241
-  sfm_type: m-sfm5-12
-  mda_type: m10-1gb-hs-sfp-b
-  SystemIP: 10.10.10.10 #/32 is implied - do NOT add. This variable gets re-used several times without the mask.
-  prefix:
+  SFM_CFG:
+    SFM:
+      - SFM_SLOT: 1
+        TYPE:
+          - SFM_TYPE: m-sfm5-12    
+  CARD_CFG:
+    CARD:
+      - CARD_SLOT: 1
+        TYPE:
+          - CARD_TYPE: iom3-xp-b
+            MDA: 
+            - MDA_SLOT: 1 
+              TYPE:
+                - MDA_TYPE: m10-1gb-hs-sfp-b 
+            - MDA_SLOT: 2
+              TYPE:
+                - MDA_TYPE: m10-1gb-hs-sfp-b
+
+  SYSTEM_IP: 10.10.10.10 #/32 is implied - do NOT add. This variable gets re-used several times without the mask.
+  PREFIX:
     - ['System-IPz', '10.10.10.0/24 prefix-length-range 32-32']
-  policy: Remote-PEz #Accept all System-IPz prefixes.
-  interfaces:
+  POLICY: Remote-PEz #Accept all System-IPz prefixes.
+  NETW_INTERFACES:
     # Interface[0], IP/Mask[1], Port[2] | Add as many as you want.
     - ['TO_R2', '10.1.2.1/24', '1/1/1']
     - ['TO_R3', '10.1.3.1/24', '1/1/2']
     - ['TO_R4', '10.1.4.1/24', '1/1/3']
     - ['TO_R5', '10.1.5.1/24', '1/1/4']
     - ['TO_R6', '10.1.6.1/24', '1/1/5']
-  mpls: true
-  mplsInterfaces:
+  MPLS: true
+  MPLS_INTERFACES:
     - ['TO_R2']
     - ['TO_R3']
     - ['TO_R4']
     - ['TO_R5']
     - ['TO_R6']
-  bgp_AS: 64500
-  ibgp_Nxbrs: # If more than 5 NXBRS, adjust template.j2 !! Change template to use a for loop like network interfaces above.
-    - ['10.10.10.20', '10.10.10.30', '10.10.10.40', '10.10.10.50', '10.10.10.60']
-  mpls_shortcuts: true
-  bgp_rapidUpdate: true
-  ospf_trf_eng: true
-  ospf_ldprsvp: true
-        # area , iface1, iface2
-  ospf_interfaces:
-      - ['0.0.0.0', 'TO_R2', 'TO_R3', 'TO_R4', 'TO_R5', 'TO_R6']
-  mgmt_vpls: 300
-  # Make sure this is left blank if no sap needed. This sap would be facing a MGMT - Switch for outbound L3 connectivity to manage nodes through IES/VPLS.
-  mgmt_SAP: 1/1/9
-  ies_id: 301
-  vprn: 100
+  BGP_AS: 64500
+  IBGP_NXBRS:
+    - ['10.10.10.20']
+    - ['10.10.10.30']
+    - ['10.10.10.40']
+    - ['10.10.10.50']
+    - ['10.10.10.60']
+  MPLS_SHORTCUTS: true
+  BGP_RAPIDUPDATE: true
+  OSPF_CFG:
+    AREA: 
+      - AREA_ID: 0.0.0.0
+        TRAFFIC_ENG: true
+        OSPF_LDPRSVP: true
+        INTERFACES:
+          - INT_NAME: TO_R2
+            INT_TYPE: point-to-point
+          - INT_NAME: TO_R3
+            INT_TYPE: point-to-point
+          - INT_NAME: TO_R4
+            INT_TYPE: point-to-point
+          - INT_NAME: TO_R5
+            INT_TYPE: point-to-point
+          - INT_NAME: TO_R6
+            INT_TYPE: point-to-point   
+  MGMT_VPLS: 310
+  # Make sure this is left blank if no sap needed. This sap would be facing a MGMT - Switch
+  # for outbound L3 connectivity to manage nodes through IES/VPLS. This SAP is NULL Encapsulated.
+  MGMT_SAP: 1/1/9
+  IES_ID: 301
+  VPRN: 100
+  ADMIN_SAVE: true

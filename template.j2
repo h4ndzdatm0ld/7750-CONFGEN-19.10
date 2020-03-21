@@ -2,10 +2,32 @@
 echo SYSTEM CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 system name {{host}}
-/configure sfm 1 sfm-type {{sfm_type}}
-/configure card 1 card-type "iom3-xp-b"
-/configure card 1  mda 1  mda-type "{{mda_type}}"
-/configure card 1  mda 2  mda-type "{{mda_type}}"
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo SFM CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{%- for SFM in SFM_CFG.SFM %}
+sfm {{ SFM.SFM_SLOT }}
+{%- for TYPE in SFM.TYPE %}
+sfm-type {{ TYPE.SFM_TYPE }}
+{% endfor %}
+{% endfor %}
+exit
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo CARD-MDA CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{%- for CARD in CARD_CFG.CARD %}
+card {{ CARD.CARD_SLOT }}
+{%- for TYPE in CARD.TYPE %}
+card-type {{ TYPE.CARD_TYPE }}
+{%- for MDA in TYPE.MDA %}
+mda {{ MDA.MDA_SLOT }}
+{%- for TYPE in MDA.TYPE %}
+mda-type {{ TYPE.MDA_TYPE }}
+exit
+{% endfor %}
+{% endfor %}
+{% endfor %}
+{% endfor %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo PORT CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,10 +64,10 @@ no shut
 ethernet mtu 9212
 exit all
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo ROUTER PREFIX LIST CONFIGURATION
+echo ROUTER PREFIX-LIST CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-configure router interface system address {{SystemIP}}/32
-{%- for ip in prefix %}
+configure router interface system address {{SYSTEM_IP}}/32
+{%- for ip in PREFIX %}
 configure router policy-options
 begin
 prefix-list {{ ip[0] }}
@@ -57,10 +79,10 @@ exit all
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo ROUTER POLICY CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{%- if policy %}
+{%- if POLICY %}
 /configure router policy-options
 begin
-policy-statement {{policy}}
+policy-statement {{POLICY}}
 entry 10
 from prefix-list "System-IPz"
 action accept
@@ -68,9 +90,9 @@ action accept
 exit all
 {%- endif %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo ROUTER INTERFACE CONFIGURATION
+echo NETWORK INTERFACE CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{%- for iface in interfaces %}
+{%- for iface in NETW_INTERFACES %}
 /configure router interface {{ iface[0] }}
 address {{ iface[1] }}
 port {{ iface[2] }}
@@ -78,7 +100,7 @@ port {{ iface[2] }}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo ROUTER MPLS CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{%- if mpls %}
+{%- if MPLS %}
 /configure router ldp
 targeted-session
 peer-template "TLDP-Mesh"
@@ -107,37 +129,28 @@ exit all
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo MPLS INTERFACE CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{%- for iface in mplsInterfaces %}
+{%- for iface in MPLS_INTERFACES %}
 /configure router mpls interface {{ iface[0] }}
 no shut
 {%- endfor %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo ROUTER BGP AS CONFIGURATION
+echo ROUTER BGP-AS CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-/configure router autonomous-system {{bgp_AS}}
+/configure router autonomous-system {{BGP_AS}}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-echo ROUTER BGP GROUP CONFIGURATION
+echo ROUTER BGP-GROUP CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 /configure router bgp group mp-BGP
 family vpn-ipv4 l2-vpn
-peer-as {{bgp_AS}}
-
-{%- for peer in ibgp_Nxbrs %}
+peer-as {{BGP_AS}}
+{%- for peer in IBGP_NXBRS %}
 neighbor {{ peer[0] }}
 exit
-neighbor {{ peer[1] }}
-exit
-neighbor {{ peer[2] }}
-exit
-neighbor {{ peer[3] }}
-exit
-neighbor {{ peer[4] }}
-exit all
 {%- endfor %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo MPLS SHORTCUTS CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-{%- if mpls_shortcuts %}
+{%- if MPLS_SHORTCUTS %}
 /configure router bgp
 next-hop-resolution
 shortcut-tunnel
@@ -147,92 +160,115 @@ rsvp
 exit
 resolution filter
 {%- endif %}
-
-
-{% if bgp_rapidUpdate %}
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo BGP RAPID-UPDATE CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% if BGP_RAPIDUPDATE %}
 /configure router bgp rapid-update l2-vpn
 {%- endif %}
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo RSVP SHORTCUTS CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {%- if rsvp_shortcut %}
 /configure router ospf rsvp-shortcut
 {% endif %}
-
-{%- if ospf_trf_eng %}
-/configure router ospf traffic-engineering
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo OSPF CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% for AREA in OSPF_CFG.AREA %}
+/configure
+router
+ospf
+{%- if AREA.OSPF_LDPRSVP %}
+ldp-over-rsvp
 {%- endif %}
-{%- if ospf_ldprsvp %}
-/configure router ospf ldp-over-rsvp
+{%- if AREA.TRAFFIC_ENG %}
+traffic-engineering
 {%- endif %}
-exit all
-
-{% for x in ospf_interfaces %}
-/configure router ospf
-area {{x[0]}} interface system
-passive
-exit
-area {{x[0]}} interface {{x[1]}}
-interface-type point-to-point
+area {{ AREA.AREA_ID }}
+{% for INTERFACES in AREA.INTERFACES %}
+interface {{ INTERFACES.INT_NAME }}
+interface-type {{ INTERFACES.INT_TYPE }}
 exit
 {% endfor %}
-/configure system chassis-mode c
-/configure service pw-template 2 create
+{% endfor %}
+exit
+exit
+exit
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo PW-TEMPLATE CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+service pw-template 2 create
 hash-label
 split-horizon-group "vpls-shg"
 exit
-/configure service vpls {{mgmt_vpls}} customer 1 create
+exit
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo MGMT VPLS CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+service vpls {{MGMT_VPLS}} customer 1 name "NODE_L2_MGMT" create
 service-mtu 9100
 allow-ip-int-bind
 exit
 bgp
-route-distinguisher {{bgp_AS}}:{{mgmt_vpls}}
-route-target export target:{{bgp_AS}}:{{mgmt_vpls}} import target:{{bgp_AS}}:{{mgmt_vpls}}
-pw-template-binding 2 split-horizon-group "vpls-shg" import-rt "target:{{bgp_AS}}:{{mgmt_vpls}}"
+route-distinguisher {{BGP_AS}}:{{MGMT_VPLS}}
+route-target export target:{{BGP_AS}}:{{MGMT_VPLS}} import target:{{BGP_AS}}:{{MGMT_VPLS}}
+pw-template-binding 2 split-horizon-group "vpls-shg" import-rt "target:{{BGP_AS}}:{{MGMT_VPLS}}"
 exit
 exit
 bgp-ad
-vpls-id {{bgp_AS}}:{{mgmt_vpls}}
+vpls-id {{BGP_AS}}:{{MGMT_VPLS}}
 vsi-id
-prefix {{ SystemIP }}
+prefix {{ SYSTEM_IP }}
 exit
 no shutdown
 exit
-stp
-shutdown
+no shutdown
 exit
-service-name "NODE_L2_MGMT"
-exit
-/configure service vpls {{mgmt_vpls}} no shutdown
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo MGMT SAP CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 {% if mgmt_SAP %}
-/configure port {{mgmt_SAP}}
+port {{MGMT_SAP}}
 shutdown
 ethernet mode access
 ethernet encap dot1q
 ethernet mtu 9212
 no shut
-/configure service vpls {{mgmt_vpls}}
-sap {{mgmt_SAP}}:{{mgmt_vpls}} create
+exit
+service vpls {{MGMT_VPLS}}
+sap {{MGMT_SAP}}:{{MGMT_VPLS}} create
+exit
+exit
 {% endif %}
-
-{% if ies_id %}
-/configure service ies {{ies_id}} customer 1 create
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo MGMT IES CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% if IES_ID %}
+service ies {{IES_ID}} customer 1 create
 interface "L3_NODE_MGMT" create
 address {{hostip}}/24
 vpls "NODE_L2_MGMT"
-/configure service ies {{ies_id}} no shutdown
-exit all
+exit
+no shutdown
+exit
+exit
 {% endif %}
-
-
-/configure service vprn {{ vprn }} customer 1 create
-autonomous-system {{ bgp_AS }}
-route-distinguisher {{ bgp_AS }}:{{ vprn }}
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo VPRN CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+service vprn {{ VPRN }} customer 1 create
+autonomous-system {{ BGP_AS }}
+route-distinguisher {{ BGP_AS }}:{{ VPRN }}
 auto-bind-tunnel
     resolution any
 exit
-vrf-target target:{{ bgp_AS }}:{{ vprn }}
+vrf-target target:{{ BGP_AS }}:{{ VPRN }}
 no shut
-
-
-/bof license-file cf3:\lic.txt
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo SAVING CONFIG
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+{% if ADMIN_SAVE %}
 /admin save
+{% endif %}
+
