@@ -6,7 +6,7 @@ A faster, easier way to build a virtual lab configuration for the Nokia 7750s ut
 
 This project is aimed at speeding up the configuration process of deploying a configuration on lab nodes. The driving force here is Python 3 and Netmiko to configure devices. Therefore, IP connectivity must be established before utilizing the scripts.
 
-Ensure you have IP connectivity via the MGMT connection. All tests have been performed using EVE-NG. At this time, the code doesn't save the generated configuration to a file, it simply is aimed at deploying the configuration in real time to a running vSR.
+Ensure you have IP connectivity via the MGMT connection. All tests have been performed using EVE-NG. 
 
 Things to note regarding the configuration:
 
@@ -17,6 +17,6 @@ Things to note regarding the configuration:
 
 
 # Future Additions
-- Configuration backups
-- Logging
+- Configuration backups - Implemented 3/23
+- Logging - Implemented 3/23
 - Error Checking
