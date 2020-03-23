@@ -8,9 +8,7 @@ echo SFM CONFIGURATION
 {%- for SFM in SFM_CFG.SFM %}
 sfm {{ SFM.SFM_SLOT }}
 {%- for TYPE in SFM.TYPE %}
-sfm-type {{ TYPE.SFM_TYPE }}
-{% endfor %}
-{% endfor %}
+sfm-type {{ TYPE.SFM_TYPE }} {% endfor %} {% endfor %}
 exit
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo CARD-MDA CONFIGURATION
@@ -19,15 +17,11 @@ echo CARD-MDA CONFIGURATION
 card {{ CARD.CARD_SLOT }}
 {%- for TYPE in CARD.TYPE %}
 card-type {{ TYPE.CARD_TYPE }}
-{%- for MDA in TYPE.MDA %}
+{%- for MDA in TYPE.MDA %} 
 mda {{ MDA.MDA_SLOT }}
 {%- for TYPE in MDA.TYPE %}
-mda-type {{ TYPE.MDA_TYPE }}
+mda-type {{ TYPE.MDA_TYPE }}{% endfor %}{% endfor %}{% endfor %}{% endfor %}
 exit
-{% endfor %}
-{% endfor %}
-{% endfor %}
-{% endfor %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo PORT CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
