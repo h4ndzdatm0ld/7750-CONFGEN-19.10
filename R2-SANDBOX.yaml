@@ -1,0 +1,59 @@
+---
+
+# The Jinja template has a lot more configuration than what's specified here.
+# Review the entire template to make sure it's what you want.
+# There are several unseen commands that run in the background, 
+# PW-Templates, etc.
+
+R2-SANDBOX: #Host / Hostname
+  hostip: 192.168.1.2
+  CARD_CFG:
+    CARD:
+      - CARD_SLOT: 1
+        TYPE:
+          - CARD_TYPE: iom-1
+            MDA: 
+            - MDA_SLOT: 1 
+              TYPE:
+                - MDA_TYPE: me6-100gb-qsfp28
+
+  SYSTEM_IP: 10.10.10.2 #/32 is implied - do NOT add. This variable gets re-used several times without the mask.
+  PREFIX:
+    - ['System-IPz', '10.10.10.0/24 prefix-length-range 32-32']
+  POLICY: Remote-PEz #Accept all System-IPz prefixes.
+  NETW_INTERFACES:
+    # Interface[0], IP/Mask[1], Port[2] | Add as many as you want.
+    - ['TO_R1', '10.1.2.2/24', '1/1/c1/1']
+    - ['TO_R4', '10.2.4.2/24', '1/1/c4/1']
+  MPLS: true
+  MPLS_INTERFACES:
+    - ['TO_R1']
+    - ['TO_R4']
+  BGP_AS: 64500
+  IBGP_NXBRS:
+    - ['10.10.10.1']
+    - ['10.10.10.3']
+    - ['10.10.10.4']
+  MPLS_SHORTCUTS: true
+  BGP_RAPIDUPDATE: true
+  OSPF_CFG:
+    AREA: 
+      - AREA_ID: 0.0.0.0
+        TRAFFIC_ENG: true
+        OSPF_LDPRSVP: false
+        INTERFACES:
+          - INT_NAME: system
+            PASSIVE: true
+          - INT_NAME: TO_R1
+            INT_TYPE: point-to-point
+          - INT_NAME: TO_R4
+            INT_TYPE: point-to-point
+  
+  MGMT_VPLS: 310
+  # Make sure this is left blank if no sap needed. This sap would be facing a MGMT - Switch
+  # for outbound L3 connectivity to manage nodes through IES/VPLS. This SAP is NULL Encapsulated.
+  MGMT_SAP: 
+  IES_ID: 301
+  VPRN: 100
+  ADMIN_SAVE: true
+

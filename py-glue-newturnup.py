@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env/ python3
 import yaml
 import jinja2
 import time
@@ -8,8 +8,8 @@ import threading
 import os
 
 # Update the yaml file name for the specific router you wish to connect to.
-yaml_file = 'R1-SANDBOX.yml'
-jinja_template = 'template.j2'
+yaml_file = 'R4-SANDBOX.yaml'
+jinja_template = 'template-205.j2'
 
 # Global date/time/day variable. Used throughout the program for file naming. 
 global d8
@@ -26,17 +26,10 @@ def createFolder(directory):
 # Logging for all Netmiko commands (SSH) Creates a new file. If file exists, it appends new content.
 # Sets up Folder | ignores if already present.
 createFolder('Logging')
-# Capture current directory.
-CWD = os.getcwd()
-# Change into new Folder and create the file.
-os.chdir('Logging')
-# Start Log
-mikoLog = ('NetmikoLog-'+ (d8)+ '.txt')
-open(mikoLog, 'a+')
-logging.basicConfig(filename=mikoLog, level=logging.DEBUG)
+
+logging.basicConfig(filename=f"Logging/NetmikoLog-{d8}.txt", level=logging.DEBUG)
 logger = logging.getLogger("netmiko")
-# Back to CWD.
-os.chdir(CWD)
+
 # ----------------------
 # Generate the configurations and send it to the devices
 def confgen(vars):
@@ -48,10 +41,10 @@ def confgen(vars):
         cfg_list = template.render(vars)
 
         # Connect directly to host via SSH on the specified port
-        conn = Netmiko(host=vars['hostip'], device_type='alcatel_sros', username="admin", password="admin")
+        conn = Netmiko(host=vars['hostip'], device_type='alcatel_sros', username="admin", password="admin", response_return=None)
 
         # Send generated commands to host
-        output = conn.send_config_set(cfg_list)
+        output = conn.send_config_set(cfg_list,cmd_verify=False)
 
         # Display results
         print('-' * 80)

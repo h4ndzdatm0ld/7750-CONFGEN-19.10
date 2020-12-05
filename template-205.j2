@@ -1,6 +1,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo SYSTEM CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/configure
 system name {{host}}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo CARD-MDA CONFIGURATION
@@ -97,13 +98,13 @@ exit all
 /configure router ldp no shut
 /configure router mpls no shut
 /configure router rsvp no shut
+/configure router mpls cspf-on-loose-hop
 /configure router mpls
 path "loose"
 no shutdown
 exit
 lsp-template "Full-Mesh" mesh-p2p
 default-path "loose"
-cspf
 fast-reroute facility
 exit
 no shutdown
@@ -173,11 +174,17 @@ traffic-engineering
 area {{ AREA.AREA_ID }}
 {% for INTERFACES in AREA.INTERFACES %}
 interface {{ INTERFACES.INT_NAME }}
+{%- if PASSIVE %}
+passive
+{%- endif %}
+{%- if INT_TYPE %}
 interface-type {{ INTERFACES.INT_TYPE }}
+{%- endif %}
 exit
 {% endfor %}
 {% endfor %}
 exit
+no shutdown
 exit
 exit
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,6 +244,7 @@ vpls "NODE_L2_MGMT"
 exit
 no shutdown
 exit
+no shutdown
 exit
 {% endif %}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
